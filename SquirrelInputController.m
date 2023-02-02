@@ -17,6 +17,8 @@
 
 const int N_KEY_ROLL_OVER = 50;
 
+extern BOOL _global_ascii_mode = false;
+
 @implementation SquirrelInputController {
   id _currentClient;
   NSString *_preeditString;
@@ -501,6 +503,10 @@ const int N_KEY_ROLL_OVER = 50;
 {
   if (!_currentApp)
     return;
+
+  // global ascii
+  rime_get_api()->set_option(_session, "ascii_mode", _global_ascii_mode);
+
   SquirrelAppOptions* appOptions = [NSApp.squirrelAppDelegate.config getAppOptions:_currentApp];
   if (appOptions) {
     for (NSString* key in appOptions) {

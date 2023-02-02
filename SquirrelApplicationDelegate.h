@@ -2,6 +2,7 @@
 
 @class SquirrelConfig;
 @class SquirrelPanel;
+@class SquirrelStatusManager;
 
 // Note: the SquirrelApplicationDelegate is instantiated automatically as an outlet of NSApp's instance
 @interface SquirrelApplicationDelegate : NSObject
@@ -11,6 +12,7 @@
 @property(nonatomic, strong) IBOutlet id updater;
 
 @property(nonatomic, readonly, strong) SquirrelConfig *config;
+@property(nonatomic, readonly, strong) SquirrelStatusManager *status_manager;
 @property(nonatomic, readonly) BOOL enableNotifications;
 
 -(IBAction)deploy:(id)sender;

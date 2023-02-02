@@ -28,4 +28,6 @@ typedef NSMutableDictionary<NSString*, NSNumber*> SquirrelMutableAppOptions;
 
 - (SquirrelAppOptions*)getAppOptions:(NSString*)appName;
 
+- (NSArray<NSString *> *)getAppLists;
+
 @end

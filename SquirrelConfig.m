@@ -156,6 +156,17 @@
   return [appOptions copy];
 }
 
+- (NSArray<NSString *> *)getAppLists {
+  NSMutableArray<NSString *> *appLists = [[NSMutableArray alloc] init];
+  RimeConfigIterator iterator;
+  rime_get_api()->config_begin_map(&iterator, &_config, "app_options");
+  while (rime_get_api()->config_next(&iterator)) {
+    [appLists addObject:@(iterator.key)];
+  }
+  rime_get_api()->config_end(&iterator);
+  return [appLists copy];
+}
+
 #pragma mark - Private methods
 
 - (id)cachedValueOfClass:(Class)aClass forKey:(NSString*)key {

@@ -4,8 +4,11 @@
 #import "SquirrelConfig.h"
 #import "SquirrelPanel.h"
 #import <UserNotifications/UserNotifications.h>
+#import "SquirrelStatusManager.h"
 
 static NSString* const kRimeWikiURL = @"https://github.com/rime/home/wiki";
+
+extern BOOL _system_ascii_mode_event;
 
 @implementation SquirrelApplicationDelegate
 
@@ -83,6 +86,20 @@ void notification_handler(void* context_object,
                           RimeSessionId session_id,
                           const char* message_type,
                           const char* message_value) {
+  // NSLog(@"Event: %s, value: %s", message_type, message_value);
+  if (!strcmp(message_type, "option") &&
+      (!strcmp(message_value, "ascii_mode") ||
+        !strcmp(message_value, "!ascii_mode"))) {
+    BOOL ascii_mode = message_value[0] != '!';
+    const char* option_name = message_value + !ascii_mode;
+
+    if (_system_ascii_mode_event) {
+      [NSApp.squirrelAppDelegate.status_manager system_event_handler:session_id OptionName:option_name OptionValue:ascii_mode];
+    }else{
+      [NSApp.squirrelAppDelegate.status_manager user_event_handler:session_id OptionName:option_name OptionValue:ascii_mode];
+    }
+  }
+
   if (!strcmp(message_type, "deploy")) {
     if (!strcmp(message_value, "start")) {
       show_message("deploy_start", message_type);
@@ -180,6 +197,9 @@ void notification_handler(void* context_object,
   if (@available(macOS 10.14, *)) {
     [self.panel loadConfig:_config forDarkMode:YES];
   }
+
+  _status_manager = [[SquirrelStatusManager alloc] init];
+  [_status_manager load_app_options];
 }
 
 - (void)loadSchemaSpecificSettings:(NSString*)schemaId {

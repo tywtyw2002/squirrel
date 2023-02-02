@@ -14,9 +14,15 @@
 -(void)rimeConsumeCommittedText;
 -(void)rimeUpdate;
 -(void)updateAppOptions;
+- (void)UpdateAsciiStatus;
 @end
 
 const int N_KEY_ROLL_OVER = 50;
+
+extern BOOL _global_ascii_mode = false;
+extern BOOL _system_ascii_mode_event = false;
+RimeSessionId _last_session = 0;
+
 
 @implementation SquirrelInputController {
   id _currentClient;
@@ -37,6 +43,10 @@ const int N_KEY_ROLL_OVER = 50;
   NSTimer *_chordTimer;
   NSTimeInterval _chordDuration;
   NSString *_currentApp;
+
+  //ascii hack
+  BOOL _ascii_mode;
+  BOOL _app_ascii_setting;
 }
 
 /*!
@@ -65,9 +75,12 @@ const int N_KEY_ROLL_OVER = 50;
       }
     }
 
-    NSString* app = [_currentClient bundleIdentifier];
+    NSString *app = [_currentClient bundleIdentifier];
+    // NSLog(@"self: %@", self);
+    // NSLog(@"cur_app: %@, app: %@, session: %lu", _currentApp, app, _session);
 
     if (![_currentApp isEqualToString:app]) {
+      // NSLog(@"Update -> cur_app: %@, app: %@", _currentApp, app);
       _currentApp = [app copy];
       [self updateAppOptions];
     }
@@ -137,6 +150,8 @@ const int N_KEY_ROLL_OVER = 50;
         if (modifiers & OSX_COMMAND_MASK)
           break;
 
+        [self UpdateAsciiStatus];
+
         int keyCode = event.keyCode;
         NSString* keyChars = event.charactersIgnoringModifiers;
         if (!isalpha(keyChars.UTF8String[0])) {
@@ -197,6 +212,7 @@ const int N_KEY_ROLL_OVER = 50;
     if (isVimBackInCommandMode &&
         rime_get_api()->get_option(_session, "vim_mode") &&
         !rime_get_api()->get_option(_session, "ascii_mode")) {
+      _system_ascii_mode_event = true;
       rime_get_api()->set_option(_session, "ascii_mode", True);
       // NSLog(@"turned Chinese mode off in vim-like editor's command mode");
     }
@@ -472,6 +488,7 @@ const int N_KEY_ROLL_OVER = 50;
   _session = rime_get_api()->create_session();
 
   _schemaId = nil;
+  _app_ascii_setting = false;
 
   if (_session) {
     [self updateAppOptions];
@@ -482,14 +499,51 @@ const int N_KEY_ROLL_OVER = 50;
 {
   if (!_currentApp)
     return;
-  SquirrelAppOptions* appOptions = [NSApp.squirrelAppDelegate.config getAppOptions:_currentApp];
+  // global ascii
+  // NSLog(@"Update APP: Set ascii_mode=%d", _global_ascii_mode);
+  Bool ascii_mode = _global_ascii_mode;
+
+  SquirrelAppOptions *appOptions = [NSApp.squirrelAppDelegate.config getAppOptions:_currentApp];
   if (appOptions) {
     for (NSString* key in appOptions) {
       BOOL value = appOptions[key].boolValue;
       NSLog(@"set app option: %@ = %d", key, value);
+      if ([key isEqualToString:@"ascii_mode"]) {
+        _app_ascii_setting = true;
+        _ascii_mode = value;
+        ascii_mode = value;
+        continue;
+      }
       rime_get_api()->set_option(_session, key.UTF8String, value);
     }
   }
+
+  _system_ascii_mode_event = true;
+  rime_get_api()->set_option(_session, "ascii_mode", ascii_mode);
+}
+
+- (void)UpdateAsciiStatus
+{
+  if (_session == _last_session) {
+    return ;
+  }
+
+  // sync ascii mode
+  Bool cur_ascii_mode = rime_get_api()->get_option(_session, "ascii_mode");
+  if (_app_ascii_setting) {
+    if (!cur_ascii_mode && _ascii_mode) {
+      // set session to ascii mode if local is not ascii mode
+      _system_ascii_mode_event = true;
+      rime_get_api()->set_option(_session, "ascii_mode", _ascii_mode);
+    }
+  }else{
+    if (_global_ascii_mode != cur_ascii_mode) {
+      _system_ascii_mode_event = true;
+      rime_get_api()->set_option(_session, "ascii_mode", _global_ascii_mode);
+    }
+  }
+
+  _last_session = _session;
 }
 
 -(void)destroySession

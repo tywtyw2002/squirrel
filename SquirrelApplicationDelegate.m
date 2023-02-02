@@ -6,6 +6,9 @@
 
 static NSString *const kRimeWikiURL = @"https://github.com/rime/home/wiki";
 
+extern BOOL _global_ascii_mode;
+extern BOOL _system_ascii_mode_event;
+
 @implementation SquirrelApplicationDelegate
 
 - (IBAction)deploy:(id)sender {
@@ -53,6 +56,20 @@ static void show_status_message(const char *msg_text_long, const char *msg_text_
 
 static void notification_handler(void *context_object, RimeSessionId session_id,
                                  const char *message_type, const char *message_value) {
+  // NSLog(@"Event: %s, value: %s", message_type, message_value);
+  if (!strcmp(message_type, "option") &&
+      (!strcmp(message_value, "ascii_mode") ||
+        !strcmp(message_value, "!ascii_mode"))) {
+    Bool ascii_mode = message_value[0] != '!';
+
+    // NSLog(@"\nEvent ascii_mode\n_system_ascii_mode_event: %d\nevent_ascii_mode: %d, _global_ascii_mode: %d", _system_ascii_mode_event, ascii_mode, _global_ascii_mode);
+    if(!_system_ascii_mode_event && ascii_mode != _global_ascii_mode) {
+      // NSLog(@"\nSet _global_ascii_mode = %d", ascii_mode);
+      _global_ascii_mode = ascii_mode;
+    }
+    _system_ascii_mode_event = false;
+  }
+
   if (!strcmp(message_type, "deploy")) {
     if (!strcmp(message_value, "start")) {
       show_message("deploy_start", message_type);

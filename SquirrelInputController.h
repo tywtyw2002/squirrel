@@ -3,10 +3,26 @@
 
 @interface SquirrelInputController : IMKInputController
 
-- (BOOL)perform:(NSUInteger)action onIndex:(NSUInteger)index;
+typedef enum {
+  kSELECT = 1, // accepts indices in digits, selection keys, and keycodes (XK_Escape)
+  kHILITE = 2, // accepts indices in digits and selection keys (char '1' / 'A')
+  kDELETE = 3  // only accepts indices in digits (int 1)
+} rimeAction;
+
+typedef enum rimeIndex : NSUInteger {
+  // 0 ... 9 are ordinal digits, used as (int) index
+  // 0x21 ... 0x7e are ASCII chars (as selection keys)
+  // other rime keycodes (as function keys), for paging etc.
+  kBackSpace  = 0xff08, // XK_BackSpace
+  kEscape     = 0xff1b, // XK_Escape
+  kHome       = 0xff50, // XK_Home
+  kPageUp     = 0xff55, // XK_Page_Up
+  kPageDown   = 0xff56, // XK_Page_Down
+  kEnd        = 0xff57, // XK_End
+  kVoidSymbol = 0xffffff // XK_VoidSymbol
+} rimeIndex;
+
+- (void)perform:(rimeAction)action
+        onIndex:(rimeIndex)index;
 
 @end
-
-#define kSELECT 0x1
-#define kDELETE 0x2
-#define kCHOOSE 0x3

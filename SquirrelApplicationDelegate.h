@@ -5,7 +5,7 @@
 @class SquirrelOptionSwitcher;
 
 // Note: the SquirrelApplicationDelegate is instantiated automatically as an outlet of NSApp's instance
-@interface SquirrelApplicationDelegate : NSObject
+@interface SquirrelApplicationDelegate : NSObject <NSApplicationDelegate>
 
 @property(nonatomic, copy) IBOutlet NSMenu *menu;
 @property(nonatomic, strong) IBOutlet SquirrelPanel *panel;
@@ -20,7 +20,7 @@
 - (IBAction)openWiki:(id)sender;
 
 - (void)setupRime;
-- (void)startRimeWithFullCheck:(BOOL)fullCheck;
+- (void)startRimeWithFullCheck:(bool)fullCheck;
 - (void)loadSettings;
 - (void)loadSchemaSpecificSettings:(NSString *)schemaId;
 - (void)loadSchemaSpecificLabels:(NSString *)schemaId;

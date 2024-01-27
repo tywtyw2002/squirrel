@@ -1,8 +1,11 @@
 name: release ci
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    override_tag:
+      description: 'Override auto generate tag.'
+      required: false
+      type: string
+
 jobs:
   build:
     runs-on: macos-latest
@@ -18,18 +21,26 @@ jobs:
       - name: Build Squirrel
         run: ./action-build.sh archive
 
-      - name: Build changelog
-        id: release_log
-        run: |
-          echo 'changelog<<EOF' >> $GITHUB_OUTPUT
-          ./action-changelog.sh >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+      # - name: Build changelog
+      #   id: release_log
+      #   run: |
+      #     echo 'changelog<<EOF' >> $GITHUB_OUTPUT
+      #     ./action-changelog.sh >> $GITHUB_OUTPUT
+      #     echo 'EOF' >> $GITHUB_OUTPUT
+
+      - name: Create Release Info
+        id: release_info
+        run:  |
+          echo "TAG_NAME=$(date +'c%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=$(date +'%Y.%m.build-%d.%H%M')" >> $GITHUB_OUTPUT
 
       - name: Create release
         uses: ncipollo/release-action@v1
+        id: release
         with:
           artifacts: "package/*.zip"
-          body: |
-            ${{ steps.release_log.outputs.changelog }}
-          draft: true
+          tag: ${{ steps.release_info.outputs.TAG_NAME }}
+          name: ${{ steps.release_info.outputs.RELEASE_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          commit: ${{ github.ref_name }}
+          draft: true

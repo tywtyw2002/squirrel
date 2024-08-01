@@ -240,6 +240,15 @@ private func notificationHandler(contextObject: UnsafeMutableRawPointer?, sessio
 
   let messageType = messageTypeC.map { String(cString: $0) }
   let messageValue = messageValueC.map { String(cString: $0) }
+
+  if (messageType == "option" && (messageValue == "ascii_mode" || messageValue == "!ascii_mode")) {
+    let ascii_mode = messageValue?.first != "!"
+    if (!k_system_ascii_mode_event && ascii_mode != k_system_ascii_mode) {
+      k_system_ascii_mode = ascii_mode
+    }
+    k_system_ascii_mode_event = false
+  }
+
   if messageType == "deploy" {
     switch messageValue {
     case "start":

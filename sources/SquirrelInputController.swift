@@ -28,6 +28,9 @@ final class SquirrelInputController: IMKInputController {
   private var chordDuration: TimeInterval = 0
   private var currentApp: String = ""
 
+  private var app_ascii_mode = false
+  private var app_ascii_setting = false
+
   // swiftlint:disable:next cyclomatic_complexity
   override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
     let modifiers = event.modifierFlags
@@ -94,6 +97,8 @@ final class SquirrelInputController: IMKInputController {
       if modifiers.contains(.command) {
         break
       }
+
+      updateAsciiStatus()
 
       let keyCode = event.keyCode
       var keyChars = event.charactersIgnoringModifiers
@@ -347,12 +352,44 @@ private extension SquirrelInputController {
     if currentApp == "" {
       return
     }
+
+    var ascii_mode = k_system_ascii_mode
+
     if let appOptions = NSApp.squirrelAppDelegate.config?.getAppOptions(currentApp) {
       for (key, value) in appOptions {
         print("set app option: \(key) = \(value)")
+        if (key == "ascii_mode") {
+            app_ascii_setting = true
+            app_ascii_mode = value
+            ascii_mode = value
+            continue
+        }
         rimeAPI.set_option(session, key, value)
       }
+
+      k_system_ascii_mode_event = true
+      rimeAPI.set_option(session, "ascii_mode", ascii_mode)
     }
+  }
+
+  func updateAsciiStatus() {
+    if (session == k_last_session) {
+        return
+    }
+
+    let cur_ascii_mode = rimeAPI.get_option(session, "ascii_mode")
+    if (app_ascii_setting) {
+        if (!cur_ascii_mode && app_ascii_mode) {
+            k_system_ascii_mode_event = true
+            rimeAPI.set_option(session, "ascii_mode", app_ascii_mode)
+        }
+    }else{
+        if (k_system_ascii_mode != cur_ascii_mode) {
+            k_system_ascii_mode_event = true
+            rimeAPI.set_option(session, "ascii_mode", k_system_ascii_mode)
+        }
+    }
+    k_last_session = session
   }
 
   func destroySession() {

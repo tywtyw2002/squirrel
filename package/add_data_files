@@ -60,8 +60,8 @@ frameworks_phase_entry() {
 }
 
 add_line() {
-    local search="^[[:space:]]*$(sed 's/\//\\\//g; s/\*/\\*/g' <<< "${1}")\$"
-    sed -i '' "/${search}/a\\
+    local search="^[[:space:]]*$(/usr/bin/sed 's/\//\\\//g; s/\*/\\*/g' <<< "${1}")\$"
+    /usr/bin/sed -i '' "/${search}/a\\
 ${2}
 " "${project_file}"
 }

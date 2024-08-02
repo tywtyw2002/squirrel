@@ -107,7 +107,18 @@ final class SquirrelInputController: IMKInputController {
          (capitalModifiers && !code.isLetter) || (!capitalModifiers && !code.isASCII) {
         keyChars = event.characters
       }
-      // print("[DEBUG] KEYDOWN client: \(sender ?? "nil"), modifiers: \(modifiers), keyCode: \(keyCode), keyChars: [\(keyChars ?? "empty")]")
+      // if keyCode == 53 {
+      //   print("[DEBUG] KEYDOWN client: \(sender ?? "nil"), modifiers: \(modifiers), keyCode: 0x35, keyChars: [ESC]")
+      // }else{
+      //   print("[DEBUG] KEYDOWN client: \(sender ?? "nil"), modifiers: \(modifiers), keyCode: 0x\(String(keyCode, radix: 16, uppercase: true)), keyChars: [\(keyChars ?? "empty")]")
+      // }
+
+      // wow check F12
+      if (currentApp == "com.blizzard.worldofwarcraft" && keyCode == 0x6F && modifiers.rawValue == 0xA00000) {
+        let mode = rimeAPI.get_option(session, "ascii_mode")
+        rimeAPI.set_option(session, "ascii_mode", !mode)
+        return true
+      }
 
       // translate osx keyevents to rime keyevents
       if let char = keyChars?.first {
